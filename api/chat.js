@@ -7,8 +7,7 @@ export default async function handler(req, res) {
 
   try {
     const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" +
-        process.env.GEMINI_API_KEY,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: {
@@ -30,12 +29,25 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
-    const reply =
-      data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "Sorry, I couldn't generate a response.";
+    console.log("Gemini Response:", data);
 
-    res.status(200).json({ reply });
+    if (data.error) {
+      return res.status(500).json({
+        reply: data.error.message,
+      });
+    }
+
+    const reply =
+      data.candidates?.[0]?.content?.parts?.[0]?.text ||
+      "No response from Gemini.";
+
+    return res.status(200).json({ reply });
+
   } catch (error) {
-    res.status(500).json({ error: "Something went wrong." });
+    console.error(error);
+
+    return res.status(500).json({
+      reply: "Server Error",
+    });
   }
 }
